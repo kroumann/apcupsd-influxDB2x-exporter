@@ -1,15 +1,20 @@
 version: '3'
 services:
-  apcupsd-influxdb-exporter:
-    image: atribe/apcupsd-influxdb-exporter
-    container_name: apcupsd-influxdb-exporter
+  apcupsd-influxdb2x-exporter:
+    image: kroumann/apcupsd-influxdb2x-exporter
+    container_name: apcupsd-influxdb2x-exporter
     restart: always
     environment:
-      WATTS: 1500 # if your ups doesn't have NOMPOWER, set this to be the rated max power, if you do have NOMPOWER, don't set this variable
-      APCUPSD_HOST: localhost # host running apcupsd
-      INFLUXDB_HOST: localhost # host running influxdb
-      HOSTNAME: unraid # host you want to show up in influxdb, optional defaults to apcupsd-influxdb-exporter
-      INFLUXDB_DATABASE: apcupsd # db name for influxdb. optional, defaults to apcupsd
-      INFLUXDB_USER: # optional, defaults to empty
-      INFLUXDB_PASSWORD: # optional, defaults to empty
+      WATTS: 800 # if your ups doesn't have NOMPOWER, set this to be the rated max power, if you do have NOMPOWER, don't set this variable
+      APCUPSD_HOST: 192.168.95.200 # host running apcupsd
+      INFLUXDB_HOST: 192.168.95.200 # host running influxdb
+      HOSTNAME: homeserver # host you want to show up in influxdb, optional defaults to apcupsd-influxdb-exporter
+      INFLUXDB_DATABASE: apcupsdv2 # db name for influxdb. optional, defaults to apcupsd
       INFLUXDB_PORT: 8086 # optional, defaults to 8086
+      INFLUXDB_V2_URL: http://192.168.95.200:8086
+      INFLUXDB_V2_ORG: private # optional, for influxdb v2.0
+      INFLUXDB_V2_TOKEN: p5cEK1TzQTohlC7wQlgkpV8tLyBO5t-tlsCfmxmVcakEE6xGvm85xBMBCBUj6rkyqBGLg2Mf4VJvKZ4XUIpNoA==
+      VERBOSE: true
+    stdin_open: true
+    tty: true
+    build: .

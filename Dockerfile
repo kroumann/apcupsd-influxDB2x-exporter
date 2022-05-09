@@ -1,9 +1,9 @@
 FROM python:alpine
 RUN apk add tzdata
-MAINTAINER Allan <atribe13@gmail.com>
+MAINTAINER kroumann <kroumann@gmail.com>
 
 WORKDIR /src
-COPY requirements.txt apcupsd-influxdb-exporter.py /src/
+COPY requirements.txt apcupsd-influxdb2x-exporter.py /src/
 RUN pip install --no-cache-dir -r requirements.txt
 
-CMD ["python", "-u", "/src/apcupsd-influxdb-exporter.py"]
+CMD ["python", "-u", "/src/apcupsd-influxdb2x-exporter.py"]

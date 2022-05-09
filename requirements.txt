@@ -1,2 +1,4 @@
+requests
 influxdb
+influxdb-client
 apcaccess

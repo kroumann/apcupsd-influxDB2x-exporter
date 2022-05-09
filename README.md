@@ -1,6 +1,6 @@
-# apcupsd-influxdb-exporter
+# apcupsd-influxdb2x-exporter
 
-Dockerized Python script that will send data from [apcupsd](http://www.apcupsd.org/) to [influxdb](https://hub.docker.com/_/influxdb).
+Dockerized Python script that will send data from [apcupsd](http://www.apcupsd.org/) to [influxdb 2.x](https://hub.docker.com/_/influxdb).
 
 ## How to build
 Building the image is straight forward:

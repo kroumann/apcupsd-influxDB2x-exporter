@@ -4,7 +4,8 @@ import requests.exceptions
 import time
 
 from apcaccess import status as apc
-from influxdb import InfluxDBClient
+from influxdb_client import InfluxDBClient, BucketRetentionRules, Point
+from influxdb_client.client.write_api import SYNCHRONOUS
 from influxdb.exceptions import InfluxDBClientError
 
 def remove_irrelevant_data(status, remove_these_keys):
@@ -24,6 +25,9 @@ def convert_numerical_values_to_floats(ups):
 
 dbname = os.getenv('INFLUXDB_DATABASE', 'apcupsd')
 user = os.getenv('INFLUXDB_USER')
+url  = os.getenv('INFLUXDB_V2_URL')
+token = os.getenv('INFLUXDB_V2_TOKEN')
+org = os.getenv('INFLUXDB_V2_ORG')
 password = os.getenv('INFLUXDB_PASSWORD')
 port = os.getenv('INFLUXDB_PORT', 8086)
 host = os.getenv('INFLUXDB_HOST')
@@ -42,20 +46,31 @@ watts_key = 'WATTS'
 nominal_power_key = 'NOMPOWER'
 
 client = None
+write_api = None
+query_api = None
+bucket_api = None
 
 while True:
     if not client:
         try:
-            client = InfluxDBClient(host, port, user, password, dbname)
+            # client = InfluxDBClient(host, port, user, password, dbname)
+            client = InfluxDBClient(url=url, token=token, org=org)
+            write_api = client.write_api(write_options=SYNCHRONOUS)
+            query_api = client.query_api()
+            buckets_api = client.buckets_api()
             client.ping()
             print('Connectivity to InfluxDB present')
-            dblist = client.get_list_database()
-            if dbname not in [ x['name'] for x in dblist]:
-                print("Database doesn't exist, creating")
-                client.create_database(dbname)
+            if dbname not in [b.name for b in buckets_api.find_buckets().buckets]:
+                print("Database doesn't exist, creating...")
+                retention_rules = BucketRetentionRules(type="expire", every_seconds=0)
+                created_bucket = buckets_api.create_bucket(bucket_name=dbname,
+                        retention_rules=retention_rules, org=org)
+                created_bucket.description = "apcupsd bucket"
+                created_bucket = buckets_api.update_bucket(bucket=created_bucket)
             if delay != min_delay:
                 delay = min_delay
                 print('Connection successful, changing delay to %d' % delay)
+
         except Exception as e:
             if isinstance(e, InfluxDBClientError) and e.code == 401:
                 print('Credentials provided are not authorized, error is: {}'.format(e.content))
@@ -80,19 +95,20 @@ while True:
 
         ups[watts_key] = float(os.getenv('WATTS', ups.get('NOMPOWER'))) * 0.01 * float(ups.get('LOADPCT', 0.0))
 
-        json_body = [
-            {
+        dictStruct = {
                 'measurement': 'apcaccess_status',
+                'tags': tags,
                 'fields': ups,
-                'tags': tags
+                # 'time':
             }
-        ]
+
+        point = Point.from_dict(dictStruct)
 
         if print_to_console:
-            print(json_body)
-            print(client.write_points(json_body))
+            print(dictStruct)
+            write_api.write(bucket=dbname, record=point)
         else:
-            client.write_points(json_body)
+            write_api.write(bucket=dbname, record=point)
 
     except ValueError as valueError:
         raise valueError
