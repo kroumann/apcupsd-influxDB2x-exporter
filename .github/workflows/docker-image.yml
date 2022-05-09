@@ -33,4 +33,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: user/app:latest
+          tags: kroumann/apcupsd-influxdb2x-exporter:latest
